@@ -1,0 +1,31 @@
+{
+  "name": "aishell",
+  "version": "1.0.0",
+  "main": "dist/index.js",
+  "bin": {
+    "aishell": "./dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "ts-node src/index.ts",
+    "demo": "./demo.sh"
+  },
+  "keywords": [
+    "cli",
+    "shell",
+    "commands",
+    "ai"
+  ],
+  "author": "",
+  "license": "ISC",
+  "description": "AI-powered shell command generator",
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.39.0",
+    "@types/node": "^22.14.1",
+    "@types/readline-sync": "^1.4.8",
+    "readline-sync": "^1.4.10",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.8.3"
+  }
+}
