@@ -35,11 +35,23 @@ AIShell is a command-line tool that helps you figure out what shell/bash command
 
 ## Configuration
 
-AIShell requires an Anthropic API key. Set it as an environment variable:
+### Required Environment Variables
+
+AIShell requires an Anthropic API key:
 
 ```sh
 export ANTHROPIC_API_KEY=your_api_key_here
 ```
+
+### Optional Environment Variables
+
+Enable debug mode to see API requests and responses:
+
+```sh
+DEBUG=true ./aishell.sh "find large files"
+```
+
+This shows colorized, formatted JSON of all API interactions.
 
 ## Usage
 

@@ -2,6 +2,7 @@
 
 import { Anthropic } from '@anthropic-ai/sdk';
 import * as readlineSync from 'readline-sync';
+import * as util from 'util';
 
 // Function to check and get API key
 function getApiKey(): string {
@@ -13,6 +14,19 @@ function getApiKey(): string {
   }
   return apiKey;
 }
+
+// Function to colorize and pretty-print JSON
+function formatJSON(obj: any): string {
+  // Use util.inspect for better formatting with colors
+  return util.inspect(obj, { 
+    colors: true, 
+    depth: null, 
+    compact: false
+  });
+}
+
+// Check if debug mode is enabled
+const isDebugMode = process.env.DEBUG === 'true';
 
 // Function to get a shell command from Claude with conversation history
 async function getShellCommand(promptHistory: string[]): Promise<string> {
@@ -36,12 +50,32 @@ async function getShellCommand(promptHistory: string[]): Promise<string> {
     }
   });
 
-  const message = await anthropic.messages.create({
+  // Create request payload
+  const requestPayload = {
     model: 'claude-3-7-sonnet-20250219',
     max_tokens: 1000,
     system: 'You are an expert in shell commands. Given a description of what the user wants to do, respond ONLY with the exact shell command they should run, with no explanation, introduction, or markdown formatting. Just output the raw command that can be directly executed. If the user provides clarifications, update your command accordingly while maintaining the same careful approach of providing only the exact command.',
     messages,
-  });
+  };
+
+  // Log request in debug mode
+  if (isDebugMode) {
+    console.error('\n🔍 DEBUG: Request to Anthropic API');
+    console.error('=====================================');
+    console.error(formatJSON(requestPayload));
+    console.error('=====================================\n');
+  }
+
+  // Make the API call
+  const message = await anthropic.messages.create(requestPayload);
+
+  // Log response in debug mode
+  if (isDebugMode) {
+    console.error('\n🔍 DEBUG: Response from Anthropic API');
+    console.error('======================================');
+    console.error(formatJSON(message));
+    console.error('======================================\n');
+  }
 
   // Handle different content types
   const content = message.content[0];
@@ -64,6 +98,14 @@ async function main() {
     console.log('');
     console.log('Example: aishell "find all files larger than 100MB"');
     console.log('');
+    console.log('Features:');
+    console.log('  - Interactive clarification: refine commands by providing feedback');
+    console.log('  - Debug mode: set DEBUG=true to see API interactions');
+    console.log('');
+    console.log('Environment variables:');
+    console.log('  ANTHROPIC_API_KEY  Required: Your Anthropic API key');
+    console.log('  DEBUG              Optional: Set to "true" to enable debug output');
+    console.log('');
     console.log('If no prompt is provided, it will ask for one interactively.');
     console.log('After suggesting a command, you can provide clarifications');
     console.log('to refine the command until you get what you need.');
@@ -79,6 +121,14 @@ async function main() {
   
   // Keep track of all prompts to maintain conversation context
   const promptHistory = [userPrompt];
+  
+  // Log initial prompt in debug mode
+  if (isDebugMode) {
+    console.error('\n🔍 DEBUG: Initial prompt');
+    console.error('=====================');
+    console.error(userPrompt);
+    console.error('=====================\n');
+  }
   
   try {
     // Interactive command refinement loop
@@ -114,6 +164,14 @@ async function main() {
       
       // Add the clarification to the prompt history
       promptHistory.push(clarification);
+      
+      // Log clarification in debug mode
+      if (isDebugMode) {
+        console.error('\n🔍 DEBUG: Clarification added');
+        console.error('==========================');
+        console.error(clarification);
+        console.error('==========================\n');
+      }
     }
     
   } catch (error) {
