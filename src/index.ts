@@ -21,7 +21,7 @@ async function getShellCommand(prompt: string): Promise<string> {
   });
   
   const message = await anthropic.messages.create({
-    model: 'claude-3-opus-20240229',
+    model: 'claude-3-7-sonnet-20250213',
     max_tokens: 1000,
     system: 'You are an expert in shell commands. Given a description of what the user wants to do, respond ONLY with the exact shell command they should run, with no explanation, introduction, or markdown formatting. Just output the raw command that can be directly executed.',
     messages: [
