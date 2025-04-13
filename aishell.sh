@@ -1,16 +1,6 @@
 #!/bin/bash
 
-# AIShell - Shell script for generating commands with Claude and pre-filling them
-
-# Check if the ANTHROPIC_API_KEY environment variable is set
-if [[ -z "${ANTHROPIC_API_KEY}" ]]; then
-  echo "Error: ANTHROPIC_API_KEY environment variable is not set."
-  echo "Please set it with: export ANTHROPIC_API_KEY=your_api_key"
-  exit 1
-fi
-
-# Default model
-MODEL="claude-3-7-sonnet-20250219"
+# AIShell - Shell script wrapper for pre-filling terminal commands
 
 # Check if rlwrap is installed
 if ! command -v rlwrap &> /dev/null; then
@@ -24,6 +14,10 @@ else
   RLWRAP_AVAILABLE=1
 fi
 
+# Get path to the Node.js script
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
+NODE_SCRIPT="${SCRIPT_DIR}/dist/index.js"
+
 # Function to get a prompt if not provided as an argument
 get_prompt() {
   if [[ $# -eq 0 ]]; then
@@ -34,44 +28,19 @@ get_prompt() {
   fi
 }
 
-# Function to call Claude API and get a command
-get_command() {
-  local prompt="$1"
-  local temp_file=$(mktemp)
+# Main function
+main() {
+  local prompt=$(get_prompt "$@")
   
-  # Prepare the API request
-  cat > "${temp_file}" << EOF
-{
-  "model": "${MODEL}",
-  "max_tokens": 1000,
-  "system": "You are an expert in shell commands. Given a description of what the user wants to do, respond ONLY with the exact shell command they should run, with no explanation, introduction, or markdown formatting. Just output the raw command that can be directly executed.",
-  "messages": [
-    {
-      "role": "user",
-      "content": "Generate a shell command to: ${prompt}"
-    }
-  ]
-}
-EOF
-
-  # Make the API call
+  # Generate command using the Node.js script with --command-only flag
+  # This flag will be added to make the Node.js script return just the command
   echo "Generating command..."
-  response=$(curl -s -X POST "https://api.anthropic.com/v1/messages" \
-    -H "Content-Type: application/json" \
-    -H "x-api-key: ${ANTHROPIC_API_KEY}" \
-    -H "anthropic-version: 2023-06-01" \
-    -d @"${temp_file}")
+  local command=$(node "${NODE_SCRIPT}" --command-only "${prompt}")
   
-  # Clean up the temp file
-  rm "${temp_file}"
-  
-  # Extract the command from the response
-  echo "${response}" | grep -o '"text":"[^"]*"' | head -1 | cut -d '"' -f 4
-}
-
-# Function to pre-fill the command in the terminal
-prefill_command() {
-  local command="$1"
+  if [[ -z "${command}" ]]; then
+    echo "Failed to generate a command. Please try again."
+    exit 1
+  fi
   
   # Show the suggested command
   echo -e "\nSuggested command:"
@@ -93,19 +62,6 @@ prefill_command() {
     # Print the command without executing
     echo "${command}" > ~/.aishell_current_command
     echo -e "\nCommand added to history. Press up arrow to access it."
-  fi
-}
-
-# Main function
-main() {
-  local prompt=$(get_prompt "$@")
-  local command=$(get_command "${prompt}")
-  
-  if [[ -n "${command}" ]]; then
-    prefill_command "${command}"
-  else
-    echo "Failed to generate a command. Please try again."
-    exit 1
   fi
 }
 

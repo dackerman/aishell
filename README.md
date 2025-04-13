@@ -10,18 +10,18 @@ AIShell is a command-line tool that helps you figure out what shell/bash command
    cd aishell
    ```
 
-2. For the Node.js version:
+2. Install dependencies and build:
    ```
    npm install
    npm run build
    ```
 
-3. For the shell script version:
+3. Make the shell script executable:
    ```
    chmod +x aishell.sh
    ```
 
-4. (Optional) Install rlwrap for better command pre-filling:
+4. (Optional but recommended) Install rlwrap for better command pre-filling:
    ```
    # Ubuntu/Debian
    sudo apt install rlwrap
@@ -43,11 +43,11 @@ export ANTHROPIC_API_KEY=your_api_key_here
 
 ## Usage
 
-AIShell comes in two versions:
+AIShell provides two interfaces for the same functionality:
 
-### Shell Script Version (Recommended for Command Pre-filling)
+### Shell Script (Recommended for Command Pre-filling)
 
-The shell script version can pre-fill commands in your terminal using rlwrap:
+The shell script version uses rlwrap to pre-fill commands in your terminal:
 
 ```sh
 ./aishell.sh "find all images modified in the last week"
@@ -59,48 +59,43 @@ or in interactive mode:
 ./aishell.sh
 ```
 
-This version uses rlwrap (if installed) to start a new shell with the command pre-filled, ready for editing or execution.
+With rlwrap installed, this starts a new shell with the command pre-filled, ready for editing or execution.
 
-### Node.js Version
+### Node.js Interface
 
-The Node.js version offers more features but cannot pre-fill commands in your terminal:
+The Node.js interface provides options to copy or execute the command:
 
 ```sh
 node dist/index.js "find large files in my home directory"
 ```
 
-or if you've linked it globally:
+or if you've linked it globally with `npm link`:
 
 ```sh
 aishell "find large files in my home directory"
 ```
 
-The Node.js version provides options to:
-1. Copy the command to clipboard
-2. Execute the command directly
-3. Exit without action
-
 ## Examples
 
-### Shell Script Version
+### Shell Script with rlwrap
 ```
-$ ./aishell.sh download a file from https://example.com/file.zip
+$ ./aishell.sh find all files larger than 100MB in my home directory
 Generating command...
 
 Suggested command:
-curl -O https://example.com/file.zip
+find /home -type f -size +100M
 
 Press Enter to use this command or Ctrl+C to cancel
-# After pressing Enter, a new shell opens with the command pre-filled
+# After pressing Enter, a new shell starts with the command pre-filled
 ```
 
-### Node.js Version
+### Node.js Interface
 ```
-$ node dist/index.js download a file from https://example.com/file.zip
+$ node dist/index.js find all files larger than 100MB
 Generating command...
 
 Suggested command:
-curl -O https://example.com/file.zip
+find . -type f -size +100M
 
 Options:
 1. Copy command to clipboard
@@ -110,17 +105,18 @@ Options:
 
 ## How It Works
 
-AIShell uses two different approaches:
+AIShell combines several technologies:
 
-1. **Shell Script Version:**
-   - Makes a direct curl request to the Anthropic API
-   - Uses rlwrap to pre-fill commands in a new shell session
-   - Falls back to adding commands to shell history if rlwrap is not available
+1. **Command Generation**: Node.js script with Anthropic's Claude API generates commands from natural language descriptions
 
-2. **Node.js Version:**
-   - Uses the Anthropic Node.js SDK
-   - Provides options to copy or execute commands
-   - More user-friendly interface but lacks command pre-filling capability
+2. **Command Pre-filling**:
+   - The shell script uses rlwrap to pre-fill commands in a new shell session
+   - rlwrap creates a new shell with the command already typed in but not executed
+   - This gives you a chance to review and edit before running
+
+3. **Fallbacks**:
+   - Without rlwrap, the shell script falls back to adding commands to shell history
+   - The Node.js interface offers clipboard copying and direct execution options
 
 ## License
 

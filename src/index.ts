@@ -46,17 +46,39 @@ async function getShellCommand(prompt: string): Promise<string> {
 
 // Main function
 async function main() {
-  // Get user prompt from command line arguments or ask for it
+  // Parse command line arguments
   const args = process.argv.slice(2);
-  let userPrompt = args.join(' ');
   
-  if (!userPrompt) {
+  // Check for command-only flag
+  const commandOnlyFlag = args.includes('--command-only');
+  
+  // Remove flags from args
+  let filteredArgs = args.filter(arg => !arg.startsWith('--'));
+  
+  // Get user prompt from command line arguments or ask for it
+  let userPrompt = filteredArgs.join(' ');
+  
+  if (!userPrompt && !commandOnlyFlag) {
     userPrompt = readlineSync.question('What do you want to do? (describe the command you need): ');
+  } else if (!userPrompt && commandOnlyFlag) {
+    console.error('Error: No prompt provided with --command-only flag');
+    process.exit(1);
   }
   
   try {
-    console.log('Generating command...');
+    // Only show "Generating command..." if not in command-only mode
+    if (!commandOnlyFlag) {
+      console.log('Generating command...');
+    }
+    
     const command = await getShellCommand(userPrompt);
+    
+    // If --command-only flag is set, just output the command and exit
+    if (commandOnlyFlag) {
+      // Output the raw command for shell script to capture
+      process.stdout.write(command);
+      process.exit(0);
+    }
     
     // Display the command
     console.log('\nSuggested command:');
@@ -118,6 +140,7 @@ async function main() {
     
   } catch (error) {
     console.error('Error:', error);
+    process.exit(1);
   }
 }
 
