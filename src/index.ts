@@ -76,21 +76,21 @@ async function main() {
         try {
           if (process.platform === 'darwin') {
             // macOS
-            childProcess.execSync(`echo "${command.replace(/"/g, '\\"')}" | pbcopy`);
+            childProcess.execSync(`echo "${command.replace(/"/g, '\\"')}" | pbcopy`, { encoding: 'utf-8' });
           } else if (process.platform === 'linux') {
             // Try xclip or xsel on Linux
             try {
-              childProcess.execSync(`echo "${command.replace(/"/g, '\\"')}" | xclip -selection clipboard`);
+              childProcess.execSync(`echo "${command.replace(/"/g, '\\"')}" | xclip -selection clipboard`, { encoding: 'utf-8' });
             } catch {
               try {
-                childProcess.execSync(`echo "${command.replace(/"/g, '\\"')}" | xsel -ib`);
+                childProcess.execSync(`echo "${command.replace(/"/g, '\\"')}" | xsel -ib`, { encoding: 'utf-8' });
               } catch {
                 console.log('Clipboard utilities not available. Install xclip or xsel.');
               }
             }
           } else if (process.platform === 'win32') {
             // Windows
-            childProcess.execSync(`echo ${command.replace(/"/g, '\\"')} | clip`);
+            childProcess.execSync(`echo ${command.replace(/"/g, '\\"')} | clip`, { encoding: 'utf-8' });
           }
           console.log('Command copied to clipboard!');
         } catch (error) {
@@ -101,7 +101,11 @@ async function main() {
         // Execute command
         console.log(`Executing: ${command}`);
         try {
-          childProcess.execSync(command, { stdio: 'inherit', shell: true });
+          // Execute the command in a shell with stdin/stdout/stderr inherited
+          childProcess.execSync(command, { 
+            stdio: 'inherit', 
+            encoding: 'utf-8'
+          });
         } catch (error) {
           // Command execution might throw even with successful exit
           // due to how Node.js handles process signals
