@@ -45,11 +45,12 @@ if [[ -z "$PROMPT" ]]; then
   fi
 fi
 
-# Generate command using the Node.js script
-echo "Generating command..." >&2
+# Generate command using the Node.js script (it will handle user interaction)
 
-# Capture the output of the Node.js script
-COMMAND=$(node "${NODE_SCRIPT}" "${PROMPT}")
+# Run the Node.js script interactively
+# The script will handle the clarification loop and output the final command
+# on stdout at the very end
+COMMAND=$(node "${NODE_SCRIPT}" "${PROMPT}" | tail -n 1)
 EXIT_CODE=$?
 
 # Check if command generation was successful
@@ -57,14 +58,6 @@ if [[ $EXIT_CODE -ne 0 || -z "$COMMAND" ]]; then
   echo "Failed to generate a command. Please try again." >&2
   exit 1
 fi
-
-# Display the suggested command
-echo -e "\nSuggested command:" >&2
-echo "$COMMAND" >&2
-
-# Ask user to confirm
-echo -e "\nPress Enter to use this command or Ctrl+C to cancel" >&2
-read
 
 # Based on available tools, pre-fill the command
 if [[ $RLWRAP_AVAILABLE -eq 1 ]]; then

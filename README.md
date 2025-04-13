@@ -73,15 +73,29 @@ This outputs the raw command to stdout, suitable for scripting or piping.
 
 ## Examples
 
-### Command Pre-filling with rlwrap
+### Command Generation with Clarifications
 ```
-$ ./aishell.sh find all files larger than 100MB in my home directory
+$ ./aishell.sh find text in files
 Generating command...
 
 Suggested command:
-find /home -type f -size +100M
+grep -r "text" .
 
-Press Enter to use this command or Ctrl+C to cancel
+Press [Enter] to accept, or type a clarification: only in python files
+
+Updating command...
+
+Suggested command:
+grep -r "text" --include="*.py" .
+
+Press [Enter] to accept, or type a clarification: and show line numbers
+
+Updating command...
+
+Suggested command:
+grep -r -n "text" --include="*.py" .
+
+Press [Enter] to accept, or type a clarification: 
 # After pressing Enter, a new shell starts with the command pre-filled
 ```
 
@@ -89,7 +103,19 @@ Press Enter to use this command or Ctrl+C to cancel
 ```
 $ node dist/index.js find all files larger than 100MB
 Generating command...
+
+Suggested command:
 find . -type f -size +100M
+
+Press [Enter] to accept, or type a clarification: only search in the Documents folder
+
+Updating command...
+
+Suggested command:
+find ~/Documents -type f -size +100M
+
+Press [Enter] to accept, or type a clarification:
+find ~/Documents -type f -size +100M
 ```
 
 ## How It Works
@@ -97,12 +123,13 @@ find . -type f -size +100M
 AIShell consists of two components:
 
 1. **Node.js Command Generator**:
-   - A simple TypeScript program that calls the Claude API
-   - Takes a natural language prompt and returns a shell command
-   - Minimal functionality focused on command generation
+   - A TypeScript program that calls the Claude API
+   - Takes a natural language prompt and generates a shell command
+   - Provides an interactive clarification loop to refine commands
+   - Maintains conversation context to improve command quality
 
 2. **Shell Script Wrapper**:
-   - Calls the Node.js generator to create the command
+   - Calls the Node.js generator and captures the final command
    - Uses rlwrap to pre-fill the command in a new shell session
    - Falls back to shell history if rlwrap isn't available
 
