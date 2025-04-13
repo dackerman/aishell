@@ -43,11 +43,9 @@ export ANTHROPIC_API_KEY=your_api_key_here
 
 ## Usage
 
-AIShell provides two interfaces for the same functionality:
+### Pre-filling Commands with the Shell Script
 
-### Shell Script (Recommended for Command Pre-filling)
-
-The shell script version uses rlwrap to pre-fill commands in your terminal:
+The recommended way to use AIShell is with the shell script, which can pre-fill commands in your terminal:
 
 ```sh
 ./aishell.sh "find all images modified in the last week"
@@ -59,25 +57,23 @@ or in interactive mode:
 ./aishell.sh
 ```
 
-With rlwrap installed, this starts a new shell with the command pre-filled, ready for editing or execution.
+When you confirm a command, it will:
+1. With rlwrap: Start a new shell with the command pre-filled
+2. Without rlwrap: Add the command to your shell history
 
-### Node.js Interface
+### Direct Command Generation
 
-The Node.js interface provides options to copy or execute the command:
+If you just want to generate a command without pre-filling:
 
 ```sh
 node dist/index.js "find large files in my home directory"
 ```
 
-or if you've linked it globally with `npm link`:
-
-```sh
-aishell "find large files in my home directory"
-```
+This outputs the raw command to stdout, suitable for scripting or piping.
 
 ## Examples
 
-### Shell Script with rlwrap
+### Command Pre-filling with rlwrap
 ```
 $ ./aishell.sh find all files larger than 100MB in my home directory
 Generating command...
@@ -89,34 +85,26 @@ Press Enter to use this command or Ctrl+C to cancel
 # After pressing Enter, a new shell starts with the command pre-filled
 ```
 
-### Node.js Interface
+### Direct Command Generation
 ```
 $ node dist/index.js find all files larger than 100MB
 Generating command...
-
-Suggested command:
 find . -type f -size +100M
-
-Options:
-1. Copy command to clipboard
-2. Execute command now
-3. Exit
 ```
 
 ## How It Works
 
-AIShell combines several technologies:
+AIShell consists of two components:
 
-1. **Command Generation**: Node.js script with Anthropic's Claude API generates commands from natural language descriptions
+1. **Node.js Command Generator**:
+   - A simple TypeScript program that calls the Claude API
+   - Takes a natural language prompt and returns a shell command
+   - Minimal functionality focused on command generation
 
-2. **Command Pre-filling**:
-   - The shell script uses rlwrap to pre-fill commands in a new shell session
-   - rlwrap creates a new shell with the command already typed in but not executed
-   - This gives you a chance to review and edit before running
-
-3. **Fallbacks**:
-   - Without rlwrap, the shell script falls back to adding commands to shell history
-   - The Node.js interface offers clipboard copying and direct execution options
+2. **Shell Script Wrapper**:
+   - Calls the Node.js generator to create the command
+   - Uses rlwrap to pre-fill the command in a new shell session
+   - Falls back to shell history if rlwrap isn't available
 
 ## License
 

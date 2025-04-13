@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# AIShell - Shell script wrapper for pre-filling terminal commands
+# AIShell - Shell script for generating and pre-filling terminal commands
 
 # Check if rlwrap is installed
 if ! command -v rlwrap &> /dev/null; then
@@ -18,52 +18,61 @@ fi
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 NODE_SCRIPT="${SCRIPT_DIR}/dist/index.js"
 
-# Function to get a prompt if not provided as an argument
-get_prompt() {
-  if [[ $# -eq 0 ]]; then
-    read -p "What do you want to do? (describe the command you need): " prompt
-    echo "${prompt}"
-  else
-    echo "$*"
-  fi
-}
+# Check for help flag
+if [[ "$1" == "--help" || "$1" == "-h" ]]; then
+  echo "Usage: ./aishell.sh [prompt]"
+  echo ""
+  echo "Generates shell commands from natural language descriptions"
+  echo "and pre-fills them in your terminal."
+  echo ""
+  echo "Examples:"
+  echo "  ./aishell.sh \"find all files larger than 100MB\""
+  echo "  ./aishell.sh find files modified in the last 24 hours"
+  echo ""
+  echo "If no prompt is provided, it will ask for one interactively."
+  exit 0
+fi
 
-# Main function
-main() {
-  local prompt=$(get_prompt "$@")
-  
-  # Generate command using the Node.js script with --command-only flag
-  # This flag will be added to make the Node.js script return just the command
-  echo "Generating command..."
-  local command=$(node "${NODE_SCRIPT}" --command-only "${prompt}")
-  
-  if [[ -z "${command}" ]]; then
-    echo "Failed to generate a command. Please try again."
+# Get prompt from arguments
+PROMPT="$*"
+
+# If no prompt was provided, ask for one
+if [[ -z "$PROMPT" ]]; then
+  read -p "What do you want to do? (describe the command you need): " PROMPT
+  if [[ -z "$PROMPT" ]]; then
+    echo "No prompt provided. Exiting."
     exit 1
   fi
-  
-  # Show the suggested command
-  echo -e "\nSuggested command:"
-  echo "${command}"
-  
-  # Ask user to confirm
-  echo -e "\nPress Enter to use this command or Ctrl+C to cancel"
-  read
-  
-  if [[ ${RLWRAP_AVAILABLE} -eq 1 ]]; then
-    # Use rlwrap for proper readline pre-filling
-    # This launches a new shell with the command pre-filled
-    echo "Starting a new shell with the command pre-filled..."
-    rlwrap -P "${command}" bash
-  else
-    # Fallback method - add to history
-    # This relies on GNU readline history expansion
-    history -s "${command}"
-    # Print the command without executing
-    echo "${command}" > ~/.aishell_current_command
-    echo -e "\nCommand added to history. Press up arrow to access it."
-  fi
-}
+fi
 
-# Run the main function
-main "$@"
+# Generate command using the Node.js script
+echo "Generating command..." >&2
+
+# Capture the output of the Node.js script
+COMMAND=$(node "${NODE_SCRIPT}" "${PROMPT}")
+EXIT_CODE=$?
+
+# Check if command generation was successful
+if [[ $EXIT_CODE -ne 0 || -z "$COMMAND" ]]; then
+  echo "Failed to generate a command. Please try again." >&2
+  exit 1
+fi
+
+# Display the suggested command
+echo -e "\nSuggested command:" >&2
+echo "$COMMAND" >&2
+
+# Ask user to confirm
+echo -e "\nPress Enter to use this command or Ctrl+C to cancel" >&2
+read
+
+# Based on available tools, pre-fill the command
+if [[ $RLWRAP_AVAILABLE -eq 1 ]]; then
+  # Use rlwrap to start a new shell with the command pre-filled
+  echo "Starting a new shell with the command pre-filled..." >&2
+  rlwrap -P "${COMMAND}" bash
+else
+  # Fallback: Add to history and print instructions
+  history -s "${COMMAND}"
+  echo -e "\nCommand added to history. Press up arrow to access it." >&2
+fi
